@@ -1,0 +1,147 @@
+﻿<div class="app-shell">
+  <header class="topbar">
+    <div class="brand-wrap">
+      <div class="brand-mark">S</div>
+      <div>
+        <p class="brand-name">{{ title }}</p>
+        <span>Nightlife safety network</span>
+      </div>
+    </div>
+
+    <nav class="topnav" aria-label="Main navigation">
+      <a href="#features">Features</a>
+      <a href="#coverage">Coverage</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+
+    <button class="primary-btn">Create squad</button>
+  </header>
+
+  <main class="hero">
+    <section class="hero-copy">
+      <div class="eyebrow">Festival-ready • group protection • real-time awareness</div>
+      <h1>Stay together. Leave safer.</h1>
+      <p>
+        Safe Squad turns a night out into a protected group network. Create a geofenced squad,
+        monitor movement, and trigger instant help when a member is isolated or in trouble.
+      </p>
+
+      <div class="cta-row">
+        <button class="primary-btn">Launch squad</button>
+        <button class="ghost-btn">See live demo</button>
+      </div>
+
+      <div class="stats-grid">
+        @for (stat of stats; track stat.label) {
+          <div class="stat-card">
+            <strong>{{ stat.value }}</strong>
+            <span>{{ stat.label }}</span>
+          </div>
+        }
+      </div>
+    </section>
+
+    <aside class="phone-panel" aria-label="Squad safety overview">
+      <div class="panel-header">
+        <span class="status-dot"></span>
+        <span>Night mode</span>
+      </div>
+
+      <div class="who-is-safe">
+        <p>Squad safety</p>
+        <h2>3 / 3 checked in</h2>
+      </div>
+
+      <div class="member-list">
+        @for (member of squad; track member.name) {
+          <div class="member-row">
+            <div class="avatar" [class]="member.color">{{ member.name.charAt(0) }}</div>
+            <div class="member-copy">
+              <strong>{{ member.name }}</strong>
+              <span>{{ member.status }}</span>
+            </div>
+            <span class="battery">{{ member.battery }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="alert-box">
+        <span class="alert-tag">Alert</span>
+        <strong>Jay left the venue alone</strong>
+        <small>Battery 68% · route drift detected</small>
+      </div>
+
+      <div class="quick-actions">
+        @for (action of actions; track action) {
+          <button>{{ action }}</button>
+        }
+      </div>
+    </aside>
+  </main>
+
+  <section id="features" class="feature-section">
+    <div class="section-heading">
+      <span class="section-kicker">Built for nights out</span>
+      <h3>Safety tools that feel discreet, fast, and human.</h3>
+    </div>
+
+    <div class="feature-grid">
+      @for (feature of features; track feature.title) {
+        <article class="feature-card">
+          <div class="feature-icon">{{ feature.icon }}</div>
+          <h4>{{ feature.title }}</h4>
+          <p>{{ feature.description }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section id="coverage" class="coverage-section">
+    <div class="coverage-copy">
+      <span class="section-kicker">Coverage</span>
+      <h3>Private, geofenced group safety without the pressure of public tracking.</h3>
+      <ul>
+        <li>Venue lock zones for festivals and campus events</li>
+        <li>Group check-ins every 15 minutes when nightlife mode is active</li>
+        <li>Escalation routing to trusted contacts and security support</li>
+      </ul>
+    </div>
+
+    <div class="mini-map">
+      <div class="map-core">
+        <span class="map-point one">A</span>
+        <span class="map-point two">B</span>
+        <span class="map-point three">C</span>
+        <span class="map-ring"></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing" class="pricing-section">
+    <div class="section-heading align-center">
+      <span class="section-kicker">Monetization</span>
+      <h3>Freemium entry, premium protection upgrades.</h3>
+    </div>
+
+    <div class="pricing-grid">
+      @for (plan of pricing; track plan.name) {
+        <article class="pricing-card" [class.featured]="plan.featured">
+          <div class="plan-header">
+            <span>{{ plan.name }}</span>
+            @if (plan.featured) {
+              <em>Most popular</em>
+            }
+          </div>
+          <h4>{{ plan.price }}</h4>
+          <p>{{ plan.description }}</p>
+          <ul>
+            @for (item of plan.features; track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+          <button class="plan-button">{{ plan.featured ? 'Upgrade' : 'Get started' }}</button>
+        </article>
+      }
+    </div>
+  </section>
+</div>
