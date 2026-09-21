@@ -1,0 +1,26 @@
+<main class="auth-shell" [class.register-mode-shell]="loginMode() === 'register'">
+  <section class="auth-visual">
+    <div class="auth-brand"><span class="brand-mark">S</span><span>Safe Squad</span></div>
+    <div class="auth-visual-copy"><span class="eyebrow">Your people. Your signal. Your night.</span><h1>{{ loginMode() === 'login' ? 'Safety that moves with your squad.' : 'Build your safety circle.' }}</h1><p>Private, discreet protection for festivals, campus nights, and every journey home.</p></div>
+    <div class="trust-row"><span class="trust-icon">+</span><span><strong>Private by design</strong><small>Your details stay protected in your account.</small></span></div>
+  </section>
+  <section class="auth-panel"><div class="auth-panel-inner">
+    <div class="mobile-brand"><span class="brand-mark">S</span><strong>Safe Squad</strong></div>
+    <span class="section-kicker">{{ loginMode() === 'login' ? 'Welcome back' : 'Create your account' }}</span>
+    <h2>{{ loginMode() === 'login' ? 'Sign in to your squad' : 'Register for Safe Squad' }}</h2>
+    <p class="auth-subtitle">{{ loginMode() === 'login' ? 'Pick up where you left off.' : 'Add your details so your squad knows who to reach.' }}</p>
+    <form (ngSubmit)="submit()">
+      @if (loginMode() === 'register') {
+        <label for="name">Full name</label><input id="name" name="name" [(ngModel)]="name" placeholder="Your name" autocomplete="name" required />
+        <div class="form-grid"><div><label for="phone">Phone number</label><input id="phone" name="phone" [(ngModel)]="phone" placeholder="+27 72 000 0000" autocomplete="tel" /></div><div><label for="emergency-name">Emergency contact</label><input id="emergency-name" name="emergencyName" [(ngModel)]="emergencyContactName" placeholder="Contact name" /></div></div>
+        <label for="emergency-phone">Emergency contact number</label><input id="emergency-phone" name="emergencyPhone" [(ngModel)]="emergencyContactPhone" placeholder="+27 72 000 0000" autocomplete="tel" />
+      }
+      <label for="email">Email address</label><input id="email" name="email" type="email" [(ngModel)]="email" placeholder="you@example.com" autocomplete="email" required />
+      <label for="password">Password <small>(8 characters minimum)</small></label><input id="password" name="password" type="password" [(ngModel)]="password" placeholder="Enter your password" autocomplete="current-password" required />
+      @if (error()) {<p class="form-error" role="alert">{{ error() }}</p>}
+      <button class="primary-btn auth-submit" type="submit" [disabled]="busy()">{{ busy() ? 'Please wait...' : (loginMode() === 'login' ? 'Sign in' : 'Create account') }} <span>→</span></button>
+    </form>
+    <p class="auth-switch">{{ loginMode() === 'login' ? 'New to Safe Squad?' : 'Already have an account?' }} <button type="button" (click)="toggleMode()">{{ loginMode() === 'login' ? 'Register now' : 'Sign in' }}</button></p>
+    <small class="legal-copy">By continuing, you agree to our Terms and Privacy Policy.</small>
+  </div></section>
+</main>

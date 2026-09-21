@@ -1,4 +1,25 @@
-# SafeSquad
+# Safe Squad
+
+Safe Squad is an Angular safety companion with a local Express API, SQLite persistence, bcrypt password hashing, JWT authentication, protected routes, squad membership, check-ins, alerts, and browser location sharing.
+
+## Run locally
+
+From the project directory:
+
+```powershell
+npm install
+npm start
+```
+
+Open `http://localhost:4200`. The command starts the Angular app and API together. The API runs at `http://localhost:3000` and creates `data/safe-squad.sqlite` automatically.
+
+Register an account with a name, email, password, phone number, and emergency contact. Create a squad, register another account, then invite that account by email from the squad dialog.
+
+## Security notes
+
+Passwords are hashed with bcrypt and protected API routes require a signed JWT. Set a strong `JWT_SECRET` environment variable before any shared or production deployment; `.env.example` shows the required variables. The SQLite database is intentionally ignored by Git.
+
+Browser location sharing requires user permission and a secure context in deployed environments. The local development server supports testing on localhost.
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.8.
 
