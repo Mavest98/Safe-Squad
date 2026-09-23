@@ -27,6 +27,9 @@ database.exec(`
     emergency_contact_name TEXT,
     emergency_contact_phone TEXT,
     password_hash TEXT NOT NULL,
+    medical_conditions TEXT,
+    blood_type TEXT,
+    allergies TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS squads (
@@ -74,6 +77,47 @@ database.exec(`
     status TEXT NOT NULL DEFAULT 'planned',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS messages (
+    id TEXT PRIMARY KEY,
+    sender_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    receiver_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    read INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS guardian_angels (
+    guardian_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    protected_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    squad_id TEXT NOT NULL REFERENCES squads(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (guardian_id, protected_id)
+  );
+  CREATE TABLE IF NOT EXISTS safe_words (
+    squad_id TEXT NOT NULL REFERENCES squads(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    word TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (squad_id, user_id)
+  );
+  CREATE TABLE IF NOT EXISTS safe_zones (
+    id TEXT PRIMARY KEY,
+    squad_id TEXT NOT NULL REFERENCES squads(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    radius REAL NOT NULL DEFAULT 200,
+    added_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS incidents (
+    id TEXT PRIMARY KEY,
+    squad_id TEXT NOT NULL REFERENCES squads(id) ON DELETE CASCADE,
+    reported_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    description TEXT NOT NULL,
+    location TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 `);
 
@@ -187,6 +231,14 @@ app.patch('/api/auth/profile', auth, (req, res) => {
   res.json({ user: publicUser(getUser(req.user.sub)) });
 });
 
+app.patch('/api/auth/medical-info', auth, (req, res) => {
+  const medicalConditions = String(req.body.medicalConditions || '').trim();
+  const bloodType = String(req.body.bloodType || '').trim();
+  const allergies = String(req.body.allergies || '').trim();
+  database.prepare('UPDATE users SET medical_conditions = ?, blood_type = ?, allergies = ? WHERE id = ?').run(medicalConditions, bloodType, allergies, req.user.sub);
+  res.json({ user: publicUser(getUser(req.user.sub)) });
+});
+
 app.get('/api/squad', auth, (req, res) => res.json({ squad: squadPayload(getSquadForUser(req.user.sub), req.user.sub) }));
 
 app.post('/api/squad', auth, (req, res) => {
@@ -295,6 +347,153 @@ app.post('/api/squad/alerts/:id/read', auth, (req, res) => {
   if (!squad) return res.status(404).json({ message: 'Create a squad first.' });
   database.prepare('UPDATE alerts SET status = ? WHERE id = ? AND squad_id = ?').run('read', req.params.id, squad.id);
   res.json({ squad: squadPayload(squad, req.user.sub) });
+});
+
+app.post('/api/squad/alerts/clear', auth, (req, res) => {
+  const squad = getSquadForUser(req.user.sub);
+  if (!squad) return res.status(404).json({ message: 'Create a squad first.' });
+  database.prepare('UPDATE alerts SET status = ? WHERE squad_id = ? AND user_id = ? AND type = ?').run('resolved', squad.id, req.user.sub, 'emergency-sos');
+  res.json({ squad: squadPayload(squad, req.user.sub) });
+});
+
+app.post('/api/squad/emergency-notification', auth, async (req, res) => {
+  const { phone, message, location, batteryLevel } = req.body;
+  if (!phone || !message) return res.status(400).json({ message: 'Phone and message are required.' });
+  
+  const subject = 'Safe Squad Emergency Alert';
+  const text = `${message}\n\nBattery: ${batteryLevel}%\nLocation: ${location?.latitude?.toFixed(6)}, ${location?.longitude?.toFixed(6)}\nMap: https://www.openstreetmap.org/?mlat=${location?.latitude}&mlon=${location?.longitude}#map=16/${location?.latitude}/${location?.longitude}`;
+  
+  if (!mailTransport) {
+    return res.json({ delivered: false, preview: { to: phone, subject, text }, message: 'SMS/Email preview created. Configure SMTP to deliver it.' });
+  }
+  
+  try {
+    await mailTransport.sendMail({ 
+      from: process.env.SMTP_FROM || process.env.SMTP_USER, 
+      to: phone, 
+      subject, 
+      text 
+    });
+    res.json({ delivered: true, message: `Emergency notification sent to ${phone}.` });
+  } catch {
+    res.status(502).json({ message: 'Emergency notification could not be delivered.' });
+  }
+});
+
+// Messaging endpoints
+app.get('/api/squad/messages', auth, (req, res) => {
+  const squad = getSquadForUser(req.user.sub);
+  if (!squad) return res.status(404).json({ message: 'Create a squad first.' });
+  
+  const messages = database.prepare(`
+    SELECT m.id, m.sender_id, m.receiver_id, m.content, m.timestamp, m.read,
+           u_from.name as sender_name, u_to.name as receiver_name
+    FROM messages m
+    JOIN users u_from ON m.sender_id = u_from.id
+    JOIN users u_to ON m.receiver_id = u_to.id
+    WHERE (m.sender_id = ? OR m.receiver_id = ?) AND 
+          (m.sender_id IN (SELECT user_id FROM squad_members WHERE squad_id = ?) OR 
+           m.receiver_id IN (SELECT user_id FROM squad_members WHERE squad_id = ?))
+    ORDER BY m.timestamp DESC LIMIT 50
+  `).all(req.user.sub, req.user.sub, squad.id, squad.id);
+  
+  const unreadCount = database.prepare(`
+    SELECT COUNT(*) as count FROM messages 
+    WHERE receiver_id = ? AND read = 0
+  `).get(req.user.sub).count;
+  
+  res.json({ messages, unreadCount });
+});
+
+app.post('/api/squad/messages', auth, (req, res) => {
+  const { sender_id, receiver_id, content } = req.body;
+  if (!sender_id || !receiver_id || !content) return res.status(400).json({ message: 'Sender, receiver, and content are required.' });
+  if (sender_id !== req.user.sub) return res.status(403).json({ message: 'Can only send messages as yourself.' });
+  
+  const squad = getSquadForUser(req.user.sub);
+  if (!squad) return res.status(404).json({ message: 'Create a squad first.' });
+  
+  const messageId = crypto.randomUUID();
+  database.prepare('INSERT INTO messages (id, sender_id, receiver_id, content, timestamp, read) VALUES (?, ?, ?, ?, ?, 0)').run(messageId, sender_id, receiver_id, content, new Date().toISOString());
+  
+  res.status(201).json({ message: 'Message sent successfully.' });
+});
+
+// Guardian Angel endpoints
+app.post('/api/squad/guardian-angel', auth, (req, res) => {
+  const { targetMemberId } = req.body;
+  if (!targetMemberId) return res.status(400).json({ message: 'Target member ID is required.' });
+  
+  const squad = getSquadForUser(req.user.sub);
+  if (!squad) return res.status(404).json({ message: 'Create a squad first.' });
+  
+  // Verify target member is in the squad
+  const memberExists = database.prepare('SELECT 1 FROM squad_members WHERE squad_id = ? AND user_id = ?').get(squad.id, targetMemberId);
+  if (!memberExists) return res.status(404).json({ message: 'Target member not in your squad.' });
+  
+  // Store guardian angel relationship
+  database.prepare('INSERT OR REPLACE INTO guardian_angels (guardian_id, protected_id, squad_id, created_at) VALUES (?, ?, ?, ?)').run(req.user.sub, targetMemberId, squad.id, new Date().toISOString());
+  
+  res.json({ message: 'Guardian Angel mode activated.' });
+});
+
+// Safe Word endpoints
+app.post('/api/squad/safe-word', auth, (req, res) => {
+  const { word } = req.body;
+  if (!word) return res.status(400).json({ message: 'Safe word is required.' });
+  
+  const squad = getSquadForUser(req.user.sub);
+  if (!squad) return res.status(404).json({ message: 'Create a squad first.' });
+  
+  database.prepare('INSERT OR REPLACE INTO safe_words (squad_id, user_id, word, created_at) VALUES (?, ?, ?, ?)').run(squad.id, req.user.sub, word, new Date().toISOString());
+  
+  res.json({ message: 'Safe word set successfully.' });
+});
+
+// Safe Zones endpoints
+app.get('/api/squad/safe-zones', auth, (req, res) => {
+  const squad = getSquadForUser(req.user.sub);
+  if (!squad) return res.status(404).json({ message: 'Create a squad first.' });
+  
+  const safeZones = database.prepare('SELECT * FROM safe_zones WHERE squad_id = ?').all(squad.id);
+  res.json({ safeZones });
+});
+
+app.post('/api/squad/safe-zones', auth, (req, res) => {
+  const { name, latitude, longitude, radius } = req.body;
+  if (!latitude || !longitude) return res.status(400).json({ message: 'Latitude and longitude are required.' });
+  
+  const squad = getSquadForUser(req.user.sub);
+  if (!squad) return res.status(404).json({ message: 'Create a squad first.' });
+  
+  const zoneId = crypto.randomUUID();
+  database.prepare('INSERT INTO safe_zones (id, squad_id, name, latitude, longitude, radius, added_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(zoneId, squad.id, name || 'Safe Zone', latitude, longitude, radius || 200, req.user.sub, new Date().toISOString());
+  
+  res.status(201).json({ message: 'Safe zone added successfully.' });
+});
+
+// Incident Reporting endpoints
+app.post('/api/squad/incidents', auth, (req, res) => {
+  const { type, description, location } = req.body;
+  if (!type || !description) return res.status(400).json({ message: 'Type and description are required.' });
+  
+  const squad = getSquadForUser(req.user.sub);
+  if (!squad) return res.status(404).json({ message: 'Create a squad first.' });
+  
+  const incidentId = crypto.randomUUID();
+  database.prepare('INSERT INTO incidents (id, squad_id, reported_by, type, description, location, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(incidentId, squad.id, req.user.sub, type, description, location, new Date().toISOString());
+  
+  // Notify squad about incident
+  const alertData = {
+    type: 'incident-report',
+    message: `Incident reported: ${type}`,
+    incidentId: incidentId,
+    reportedBy: req.user.sub
+  };
+  
+  database.prepare('INSERT INTO alerts (id, squad_id, user_id, type, message) VALUES (?, ?, ?, ?, ?)').run(crypto.randomUUID(), squad.id, req.user.sub, 'incident-report', `${type} reported by squad member`);
+  
+  res.status(201).json({ message: 'Incident reported successfully.' });
 });
 
 app.listen(PORT, () => console.log(`Safe Squad API listening on http://localhost:${PORT}`));

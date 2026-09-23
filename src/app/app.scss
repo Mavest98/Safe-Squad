@@ -35,7 +35,7 @@ button { cursor: pointer; }
 .trust-row { display: flex; align-items: center; gap: 13px; position: relative; z-index: 1; color: var(--green-dark); }
 .trust-icon { display: grid; place-items: center; width: 35px; height: 35px; border: 1px solid rgba(31,138,104,.35); border-radius: 50%; font-weight: 800; }
 .trust-row strong, .trust-row small { display: block; }.trust-row small { margin-top: 4px; color: #668077; }
-.auth-panel { display: grid; place-items: center; padding: 32px 8%; background: #fff; }
+.auth-panel { display: grid; place-items: center; padding: 32px 8%; background: #b35ed4; }
 .auth-panel-inner { width: min(100%, 410px); }.mobile-brand { display: none; }
 .auth-panel h2 { margin: 13px 0 8px; font-size: 2.2rem; letter-spacing: -.055em; }.auth-subtitle { margin: 0 0 32px; color: var(--muted); }
 form label, .dialog label { display: block; margin: 18px 0 8px; color: #31423b; font-size: .78rem; font-weight: 800; }
