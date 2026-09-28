@@ -16,6 +16,22 @@
 button, input { font: inherit; }
 button { cursor: pointer; }
 
+.back-to-landing {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin-bottom: 1rem;
+  transition: color 0.2s ease;
+}
+
+.back-to-landing:hover {
+  color: var(--ink);
+}
+
 .auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr 0.85fr; background: var(--paper); }
 .auth-visual { position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 100vh; padding: 42px 8%; overflow: hidden; background: #e7dfd2; }
 .register-mode-shell .auth-visual { background: #12b0c5; }

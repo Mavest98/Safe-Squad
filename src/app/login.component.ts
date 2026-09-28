@@ -21,8 +21,16 @@ export class LoginComponent {
   emergencyContactName = '';
   emergencyContactPhone = '';
 
-  constructor(private readonly auth: AuthService, private readonly router: Router, private readonly route: ActivatedRoute) {
-    if (this.route.snapshot.routeConfig?.path === 'register') this.loginMode.set('register');
+  constructor(
+    public readonly router: Router,
+    private readonly auth: AuthService, 
+    private readonly route: ActivatedRoute
+  ) {
+    // Check for mode in query params
+    const mode = this.route.snapshot.queryParamMap.get('mode');
+    if (mode === 'register') {
+      this.loginMode.set('register');
+    }
   }
 
   submit(): void {
@@ -35,13 +43,22 @@ export class LoginComponent {
       this.error.set('Use a valid email and a password with at least 8 characters.');
       return;
     }
+    if (this.loginMode() === 'register' && !this.phone.trim()) {
+      this.error.set('Enter your phone number for emergency contacts.');
+      return;
+    }
     this.busy.set(true);
     const request = this.loginMode() === 'login'
       ? this.auth.login(this.email, this.password)
       : this.auth.register({ name: this.name, email: this.email, password: this.password, phone: this.phone, emergencyContactName: this.emergencyContactName, emergencyContactPhone: this.emergencyContactPhone });
     request.subscribe({
-      next: () => this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard'),
-      error: (response) => { this.error.set(response.error?.message || 'The service is unavailable. Start the API and try again.'); this.busy.set(false); },
+      next: () => {
+        this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard');
+      },
+      error: (response) => { 
+        this.error.set(response.error?.message || 'The service is unavailable. Start the API and try again.'); 
+        this.busy.set(false); 
+      },
     });
   }
 

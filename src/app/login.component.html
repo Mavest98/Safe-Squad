@@ -6,6 +6,7 @@
   </section>
   <section class="auth-panel"><div class="auth-panel-inner">
     <div class="mobile-brand"><span class="brand-mark">S</span><strong>Safe Squad</strong></div>
+    <button class="back-to-landing" type="button" (click)="router.navigate(['/landing'])">← Back to Home</button>
     <span class="section-kicker">{{ loginMode() === 'login' ? 'Welcome back' : 'Create your account' }}</span>
     <h2>{{ loginMode() === 'login' ? 'Sign in to your squad' : 'Register for Safe Squad' }}</h2>
     <p class="auth-subtitle">{{ loginMode() === 'login' ? 'Pick up where you left off.' : 'Add your details so your squad knows who to reach.' }}</p>

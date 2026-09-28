@@ -1,6 +1,12 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
+import { Router } from '@angular/router';
+
+export interface SessionWarning {
+  show: boolean;
+  timeRemaining: number;
+}
 
 export interface UserProfile {
   id: string;
@@ -21,14 +27,49 @@ export interface AuthResponse {
 export class AuthService {
   private readonly apiUrl = 'http://localhost:3000/api';
   readonly user = signal<UserProfile | null>(null);
+  private inactivityTimer?: number;
+  private readonly INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+  private lastActivityTime = Date.now();
 
-  constructor(private readonly http: HttpClient) {
+  constructor(private readonly http: HttpClient, private readonly router: Router) {
+    this.setupInactivityTracking();
     const token = localStorage.getItem('safe-squad-token');
     if (token) {
       this.http.get<{ user: UserProfile }>(`${this.apiUrl}/auth/me`, { headers: this.headers() }).pipe(catchError(() => of(null))).subscribe((response) => {
-        if (response) this.user.set(response.user);
-        else this.logout();
+        if (response) {
+          this.user.set(response.user);
+          this.resetInactivityTimer();
+        } else {
+          this.logout();
+        }
       });
+    }
+  }
+
+  private setupInactivityTracking(): void {
+    // Track user activity
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      window.addEventListener(event, () => this.resetInactivityTimer());
+    });
+
+    // Check inactivity every minute
+    setInterval(() => {
+      const inactiveTime = Date.now() - this.lastActivityTime;
+      if (inactiveTime >= this.INACTIVITY_TIMEOUT && this.user()) {
+        console.log('Auto-logout due to inactivity');
+        this.logout();
+      }
+    }, 60000); // Check every minute
+  }
+
+  private resetInactivityTimer(): void {
+    this.lastActivityTime = Date.now();
+  }
+
+  private clearInactivityTimer(): void {
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
     }
   }
 
@@ -41,22 +82,26 @@ export class AuthService {
   }
 
   logout(): void {
+    this.clearInactivityTimer();
     localStorage.removeItem('safe-squad-token');
     this.user.set(null);
+    this.router.navigate(['/login']);
   }
 
   hasSession(): boolean {
-    return Boolean(localStorage.getItem('safe-squad-token'));
+    return !!localStorage.getItem('safe-squad-token');
   }
 
   validateSession(): Observable<boolean> {
     return this.http.get<{ user: UserProfile }>(`${this.apiUrl}/auth/me`, { headers: this.headers() }).pipe(
-      tap((response) => this.user.set(response.user)),
-      map(() => true),
-      catchError(() => {
-        this.logout();
-        return of(false);
+      map((response) => {
+        if (response) {
+          this.user.set(response.user);
+          return true;
+        }
+        return false;
       }),
+      catchError(() => of(false))
     );
   }
 
