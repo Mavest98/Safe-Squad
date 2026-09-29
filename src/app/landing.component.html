@@ -1,5 +1,13 @@
 <div class="landing-container">
-  <div class="landing-background"></div>
+  <div class="landing-background">
+    <div class="background-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="shape shape-4"></div>
+      <div class="shape shape-5"></div>
+    </div>
+  </div>
   <div class="landing-content">
     <div class="landing-header">
       <div class="brand">
@@ -12,43 +20,80 @@
     </div>
 
     <div class="landing-hero">
-      <h2 class="hero-title">Your Safety Circle,<br>Always Connected</h2>
-      <p class="hero-subtitle">Stay safe with real-time location sharing, emergency alerts, and trusted squad coordination for any night out.</p>
-      
-      <div class="hero-actions">
-        <button class="primary-btn large" type="button" (click)="navigateToLogin()">Get Started Free</button>
-        <button class="secondary-btn large" type="button" (click)="navigateToRegister()">Learn More</button>
+      <div class="hero-visual">
+        <div class="hero-shield">
+          <div class="shield-ring"></div>
+          <div class="shield-ring shield-ring-2"></div>
+          <div class="shield-core">
+            <span class="shield-icon">🛡️</span>
+          </div>
+          <div class="shield-particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-text">
+        <h2 class="hero-title">Your Safety Circle,<br>Always Connected</h2>
+        <p class="hero-subtitle">Stay safe with real-time location sharing, emergency alerts, and trusted squad coordination for any night out.</p>
+        
+        <div class="hero-actions">
+          <button class="primary-btn large" type="button" (click)="navigateToLogin()">
+            <span class="btn-text">Get Started Free</span>
+            <span class="btn-icon">→</span>
+          </button>
+          <button class="secondary-btn large" type="button" (click)="navigateToRegister()">
+            <span class="btn-text">Learn More</span>
+            <span class="btn-icon">⚡</span>
+          </button>
+        </div>
       </div>
     </div>
 
     <div class="features-grid">
       <div class="feature-card">
-        <span class="feature-icon">🚨</span>
+        <div class="feature-icon-wrapper">
+          <span class="feature-icon">🚨</span>
+        </div>
         <h3>Emergency SOS</h3>
         <p>One-tap emergency alerts to your entire squad with precise location and status.</p>
       </div>
       <div class="feature-card">
-        <span class="feature-icon">📍</span>
+        <div class="feature-icon-wrapper">
+          <span class="feature-icon">📍</span>
+        </div>
         <h3>Live Location</h3>
         <p>Real-time location sharing so your squad always knows where you are.</p>
       </div>
       <div class="feature-card">
-        <span class="feature-icon">👥</span>
+        <div class="feature-icon-wrapper">
+          <span class="feature-icon">👥</span>
+        </div>
         <h3>Trusted Squads</h3>
         <p>Create safety circles with people you trust for coordinated protection.</p>
       </div>
       <div class="feature-card">
-        <span class="feature-icon">⏰</span>
+        <div class="feature-icon-wrapper">
+          <span class="feature-icon">⏰</span>
+        </div>
         <h3>Check-in Pulse</h3>
         <p>Regular check-ins to confirm your safety without constant messaging.</p>
       </div>
       <div class="feature-card">
-        <span class="feature-icon">💬</span>
+        <div class="feature-icon-wrapper">
+          <span class="feature-icon">💬</span>
+        </div>
         <h3>Squad Messaging</h3>
         <p>Secure messaging within your safety circle for quick coordination.</p>
       </div>
       <div class="feature-card">
-        <span class="feature-icon">🛡️</span>
+        <div class="feature-icon-wrapper">
+          <span class="feature-icon">🛡️</span>
+        </div>
         <h3>Safe Zones</h3>
         <p>Mark safe locations and get automatic alerts when entering/leaving them.</p>
       </div>

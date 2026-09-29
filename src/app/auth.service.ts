@@ -3,11 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 import { Router } from '@angular/router';
 
-export interface SessionWarning {
-  show: boolean;
-  timeRemaining: number;
-}
-
 export interface UserProfile {
   id: string;
   name: string;
@@ -56,8 +51,9 @@ export class AuthService {
     // Check inactivity every minute
     setInterval(() => {
       const inactiveTime = Date.now() - this.lastActivityTime;
+      
+      // Auto-logout after 5 minutes
       if (inactiveTime >= this.INACTIVITY_TIMEOUT && this.user()) {
-        console.log('Auto-logout due to inactivity');
         this.logout();
       }
     }, 60000); // Check every minute

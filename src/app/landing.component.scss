@@ -18,6 +18,81 @@
   z-index: 0;
 }
 
+.background-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  animation: float 6s ease-in-out infinite;
+}
+
+.shape-1 {
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.shape-2 {
+  width: 200px;
+  height: 200px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 1s;
+  animation-duration: 8s;
+}
+
+.shape-3 {
+  width: 150px;
+  height: 150px;
+  bottom: 20%;
+  left: 30%;
+  animation-delay: 2s;
+  animation-duration: 7s;
+}
+
+.shape-4 {
+  width: 100px;
+  height: 100px;
+  top: 30%;
+  right: 30%;
+  animation-delay: 3s;
+  animation-duration: 5s;
+}
+
+.shape-5 {
+  width: 80px;
+  height: 80px;
+  bottom: 40%;
+  right: 40%;
+  animation-delay: 4s;
+  animation-duration: 9s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-20px) rotate(5deg);
+  }
+  50% {
+    transform: translateY(-40px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-20px) rotate(-5deg);
+  }
+}
+
 .landing-content {
   position: relative;
   z-index: 1;
@@ -69,9 +144,161 @@
 }
 
 .landing-hero {
-  text-align: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
   padding: 4rem 0;
   animation: fadeIn 1s ease 0.2s both;
+}
+
+.hero-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-shield {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hero-rotate 20s linear infinite;
+}
+
+.shield-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  animation: shield-pulse 3s ease-in-out infinite;
+}
+
+.shield-ring-2 {
+  width: 240px;
+  height: 240px;
+  animation-delay: 0.5s;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.shield-core {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: shield-bounce 2s ease-in-out infinite;
+}
+
+.shield-icon {
+  font-size: 3rem;
+}
+
+.shield-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: particle-orbit 4s linear infinite;
+}
+
+.particle:nth-child(1) {
+  top: 10%;
+  left: 50%;
+  animation-delay: 0s;
+}
+
+.particle:nth-child(2) {
+  top: 50%;
+  right: 10%;
+  animation-delay: 0.5s;
+}
+
+.particle:nth-child(3) {
+  bottom: 10%;
+  left: 50%;
+  animation-delay: 1s;
+}
+
+.particle:nth-child(4) {
+  top: 50%;
+  left: 10%;
+  animation-delay: 1.5s;
+}
+
+.particle:nth-child(5) {
+  top: 20%;
+  right: 20%;
+  animation-delay: 2s;
+}
+
+.particle:nth-child(6) {
+  bottom: 20%;
+  left: 20%;
+  animation-delay: 2.5s;
+}
+
+.hero-text {
+  text-align: left;
+}
+
+@keyframes hero-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shield-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+@keyframes shield-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes particle-orbit {
+  0% {
+    transform: rotate(0deg) translateX(120px) rotate(0deg);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg) translateX(120px) rotate(-360deg);
+    opacity: 0;
+  }
 }
 
 .hero-title {
@@ -112,11 +339,43 @@
   cursor: pointer;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.primary-btn.large::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: #667eea;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.primary-btn.large:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .primary-btn.large:hover {
   transform: translateY(-3px);
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  color: white;
+}
+
+.primary-btn.large .btn-icon {
+  transition: transform 0.3s ease;
+}
+
+.primary-btn.large:hover .btn-icon {
+  transform: translateX(5px);
 }
 
 .secondary-btn.large {
@@ -130,12 +389,48 @@
   cursor: pointer;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.secondary-btn.large::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.secondary-btn.large:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .secondary-btn.large:hover {
   background: rgba(255, 255, 255, 0.3);
   border-color: rgba(255, 255, 255, 0.6);
   transform: translateY(-3px);
+}
+
+.secondary-btn.large .btn-icon {
+  animation: btn-icon-bounce 1s ease infinite;
+}
+
+@keyframes btn-icon-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .features-grid {
@@ -154,6 +449,23 @@
   padding: 2rem;
   text-align: center;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.feature-card:hover::before {
+  left: 100%;
 }
 
 .feature-card:hover {
@@ -162,10 +474,29 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
+.feature-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  animation: icon-pulse 2s ease-in-out infinite;
+}
+
 .feature-icon {
-  font-size: 3rem;
-  display: block;
-  margin-bottom: 1rem;
+  font-size: 2.5rem;
+}
+
+@keyframes icon-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .feature-card h3 {
@@ -209,10 +540,49 @@
   color: white;
   font-weight: 600;
   font-size: 1.125rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  animation: trust-appear 0.5s ease both;
+}
+
+.trust-point:nth-child(1) { animation-delay: 0.1s; }
+.trust-point:nth-child(2) { animation-delay: 0.2s; }
+.trust-point:nth-child(3) { animation-delay: 0.3s; }
+.trust-point:nth-child(4) { animation-delay: 0.4s; }
+
+.trust-point:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .trust-icon {
   font-size: 1.5rem;
+  animation: trust-icon-spin 3s linear infinite;
+}
+
+@keyframes trust-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes trust-icon-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .landing-footer {
@@ -268,6 +638,31 @@
 }
 
 @media (max-width: 768px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 2rem;
+  }
+  
+  .hero-text {
+    text-align: center;
+  }
+  
+  .hero-shield {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .shield-ring-2 {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .shield-ring-3 {
+    width: 210px;
+    height: 210px;
+  }
+  
   .hero-title {
     font-size: 2.5rem;
   }
@@ -292,5 +687,9 @@
   .primary-btn.large,
   .secondary-btn.large {
     width: 100%;
+  }
+  
+  .background-shapes {
+    display: none;
   }
 }

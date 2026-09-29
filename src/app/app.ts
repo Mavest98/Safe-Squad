@@ -222,12 +222,9 @@ export class App implements OnInit {
     }
     
     this.user.set(this.auth.user());
-    console.log('User:', this.auth.user());
-    console.log('User signal:', this.user());
     
     this.auth.get<{ squad: SquadData | null }>('/squad').subscribe({
       next: (response) => { 
-        console.log('Squad loaded:', response.squad);
         this.applySquad(response.squad); 
         this.loading.set(false); 
         this.startAlertPolling(); 
@@ -235,7 +232,6 @@ export class App implements OnInit {
         this.loadWeather();
       },
       error: (response) => { 
-        console.error('Squad loading error:', response);
         this.error.set(response.error?.message || 'Could not load your squad.'); 
         this.loading.set(false); 
       },
@@ -1220,7 +1216,6 @@ export class App implements OnInit {
     const longitude = location?.longitude ?? 28.0473;
     const delta = 0.025;
     const url = `https://www.openstreetmap.org/export/embed.html?bbox=${longitude - delta}%2C${latitude - delta}%2C${longitude + delta}%2C${latitude + delta}&layer=mapnik&marker=${latitude}%2C${longitude}`;
-    console.log('Map URL generated:', url);
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
