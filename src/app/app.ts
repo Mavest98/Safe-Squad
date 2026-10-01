@@ -134,6 +134,8 @@ export class App implements OnInit {
   // --- Guardian Angel Mode Signals
   readonly guardianAngelActive = signal(false);
   readonly guardianAngelMember = signal<string | null>(null);
+  readonly showGuardianAngelDialog = signal(false);
+  selectedGuardianMember = '';
   
   // --- Safe Word System Signals
   readonly safeWord = signal('');
@@ -172,6 +174,9 @@ export class App implements OnInit {
   readonly safeZones = signal<{ id: string; name: string; latitude: number; longitude: number; radius: number; addedBy: string; timestamp: string }[]>([]);
   readonly inSafeZone = signal(false);
   readonly currentSafeZone = signal<{ id: string; name: string; latitude: number; longitude: number; radius: number; addedBy: string; timestamp: string } | null>(null);
+  readonly showSafeZoneDialog = signal(false);
+  safeZoneName = '';
+  safeZoneRadius = 200;
   
   squadName = '';
   venue = '';
@@ -196,6 +201,10 @@ export class App implements OnInit {
     { icon: '⏱', title: 'Safety timer', description: 'Set a countdown timer that automatically alerts your squad if you do not check in.' },
     { icon: '🏥', title: 'Medical information', description: 'Store critical medical info for emergency responders.' },
     { icon: '🔒', title: 'Stealth mode', description: 'Discreet operation with hidden UI elements for sensitive situations.' },
+    { icon: '👮', title: 'Nearby police', description: 'Find the nearest police stations and emergency services.' },
+    { icon: '🗺️', title: 'Emergency routes', description: 'Get safe route suggestions to your destination.' },
+    { icon: '📍', title: 'Safe zones', description: 'Configure and manage your personal safe zones.' },
+    { icon: '👼', title: 'Guardian Angel', description: 'Assign a squad member to monitor your safety.' },
   ];
 
   constructor(private readonly auth: AuthService, private readonly router: Router, private readonly sanitizer: DomSanitizer) {
@@ -397,14 +406,17 @@ export class App implements OnInit {
 
   quickSOS(): void {
     this.triggerDangerMode();
+    this.toggleEmergencyShortcuts();
   }
 
   quickCallEmergency(): void {
     this.callEmergencyServices();
+    this.toggleEmergencyShortcuts();
   }
 
   quickShareLocation(): void {
     this.shareLocation();
+    this.toggleEmergencyShortcuts();
   }
 
   // --- Location History ---
@@ -923,11 +935,6 @@ export class App implements OnInit {
     }, 60000); // Check every minute
   }
 
-  getMemberName(memberId: string): string {
-    const member = this.squad()?.members?.find(m => m.id === memberId);
-    return member?.name || 'Unknown';
-  }
-
   // --- Safe Word System Logic ---
   openSafeWordDialog(): void {
     this.showSafeWordDialog.set(true);
@@ -1028,13 +1035,153 @@ export class App implements OnInit {
     const φ2 = lat2 * Math.PI / 180;
     const Δφ = (lat2 - lat1) * Math.PI / 180;
     const Δλ = (lon2 - lon1) * Math.PI / 180;
-    
+
     const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
               Math.cos(φ1) * Math.cos(φ2) *
               Math.sin(Δλ/2) * Math.sin(Δλ/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    
+
     return R * c;
+  }
+
+  // Safe Zone Methods
+  addSafeZone(): void {
+    if (!this.safeZoneName.trim()) {
+      this.error.set('Please enter a name for the safe zone.');
+      return;
+    }
+
+    const location = this.currentLocation();
+    if (!location) {
+      this.error.set('Location not available. Please enable location services.');
+      return;
+    }
+
+    const newSafeZone = {
+      id: generateUUID(),
+      name: this.safeZoneName,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      radius: this.safeZoneRadius,
+      addedBy: this.auth.user()?.id || '',
+      timestamp: new Date().toISOString()
+    };
+
+    this.auth.post<{ safeZones: any[] }>('/squad/safe-zones', newSafeZone).subscribe({
+      next: (response) => {
+        this.safeZones.set(response.safeZones || []);
+        this.showSafeZoneDialog.set(false);
+        this.safeZoneName = '';
+        this.safeZoneRadius = 200;
+        this.actionNotice.set('Safe zone added successfully!');
+        this.checkSafeZones();
+      },
+      error: (response) => this.error.set(response.error?.message || 'Could not add safe zone.')
+    });
+  }
+
+  deleteSafeZone(zoneId: string): void {
+    this.auth.delete<{ safeZones: any[] }>(`/squad/safe-zones/${zoneId}`).subscribe({
+      next: (response) => {
+        this.safeZones.set(response.safeZones || []);
+        this.actionNotice.set('Safe zone removed.');
+        this.checkSafeZones();
+      },
+      error: (response) => this.error.set(response.error?.message || 'Could not remove safe zone.')
+    });
+  }
+
+  checkSafeZones(): void {
+    const location = this.currentLocation();
+    if (!location) return;
+
+    let inAnyZone = false;
+    let currentZone = null;
+
+    for (const zone of this.safeZones()) {
+      const distance = this.calculateDistance(
+        location.latitude,
+        location.longitude,
+        zone.latitude,
+        zone.longitude
+      );
+
+      if (distance <= zone.radius) {
+        inAnyZone = true;
+        currentZone = zone;
+        break;
+      }
+    }
+
+    const wasInZone = this.inSafeZone();
+    this.inSafeZone.set(inAnyZone);
+    this.currentSafeZone.set(currentZone);
+
+    // Notify when entering or leaving a safe zone
+    if (inAnyZone && !wasInZone && currentZone) {
+      this.actionNotice.set(`Entered safe zone: ${currentZone.name}`);
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Safe Zone Entered', {
+          body: `You are now in ${currentZone.name}`,
+          icon: '🛡️'
+        });
+      }
+    } else if (!inAnyZone && wasInZone) {
+      this.actionNotice.set('Left safe zone');
+    }
+  }
+
+  // Guardian Angel Methods
+  setGuardianAngel(): void {
+    if (!this.selectedGuardianMember) {
+      this.error.set('Please select a squad member to be your guardian.');
+      return;
+    }
+
+    this.guardianAngelMember.set(this.selectedGuardianMember);
+    this.guardianAngelActive.set(true);
+    this.showGuardianAngelDialog.set(false);
+    this.actionNotice.set(`Guardian Angel activated for ${this.getMemberName(this.selectedGuardianMember)}`);
+  }
+
+  stopGuardianAngel(): void {
+    this.guardianAngelActive.set(false);
+    this.guardianAngelMember.set(null);
+    this.actionNotice.set('Guardian Angel monitoring stopped.');
+  }
+
+  getMemberName(memberId: string): string {
+    const member = this.squad()?.members.find(m => m.id === memberId);
+    return member?.name || 'Unknown';
+  }
+
+  // Nearby Police Feature
+  findNearbyPolice(): void {
+    const location = this.currentLocation();
+    if (!location) {
+      this.error.set('Location not available. Please enable location services.');
+      return;
+    }
+
+    // Open Google Maps search for nearby police stations
+    const mapsUrl = `https://www.google.com/maps/search/police+station/@${location.latitude},${location.longitude},14z`;
+    window.open(mapsUrl, '_blank');
+    this.actionNotice.set('Opening nearby police stations on Google Maps...');
+  }
+
+  // Emergency Routes Feature
+  findEmergencyRoutes(): void {
+    const location = this.currentLocation();
+    if (!location) {
+      this.error.set('Location not available. Please enable location services.');
+      return;
+    }
+
+    // Open Google Maps with safe route to home (or nearest hospital)
+    const destination = this.trip()?.destination || 'hospital';
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${location.latitude},${location.longitude}&destination=${encodeURIComponent(destination)}&travelmode=walking`;
+    window.open(mapsUrl, '_blank');
+    this.actionNotice.set('Opening emergency route directions...');
   }
 
   // --- Safety Score Gamification Logic ---
@@ -1122,62 +1269,6 @@ export class App implements OnInit {
         this.error.set('Could not submit incident report.');
       }
     });
-  }
-
-  // --- Safe Zones Logic ---
-  addSafeZone(): void {
-    const location = this.currentLocation();
-    if (!location) {
-      this.error.set('Location required to add safe zone.');
-      return;
-    }
-    
-    const safeZone = {
-      id: generateUUID(),
-      name: `Safe Zone ${this.safeZones().length + 1}`,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      radius: 200, // 200 meters default
-      addedBy: this.auth.user()?.id || '',
-      timestamp: new Date().toISOString()
-    };
-    
-    this.auth.post('/squad/safe-zones', safeZone).subscribe({
-      next: () => {
-        this.safeZones.update(zones => [...zones, safeZone]);
-        this.actionNotice.set('Safe zone added successfully.');
-      },
-      error: () => {
-        this.error.set('Could not add safe zone.');
-      }
-    });
-  }
-
-  checkSafeZones(): void {
-    const location = this.currentLocation();
-    if (!location) return;
-    
-    let inAnyZone = false;
-    let foundZone: any = null;
-    
-    this.safeZones().forEach(zone => {
-      const distance = this.calculateDistance(
-        location.latitude, location.longitude,
-        zone.latitude, zone.longitude
-      );
-      
-      if (distance <= zone.radius) {
-        inAnyZone = true;
-        foundZone = zone;
-      }
-    });
-    
-    this.inSafeZone.set(inAnyZone);
-    this.currentSafeZone.set(foundZone);
-    
-    if (inAnyZone && foundZone) {
-      this.actionNotice.set(`✓ Entered safe zone: ${foundZone.name || 'Safe Zone'}`);
-    }
   }
 
   openProfileDialog(): void {
@@ -1305,6 +1396,10 @@ export class App implements OnInit {
     if (title === 'Safety timer') { this.openSafetyTimerDialog(); return; }
     if (title === 'Medical information') { this.openMedicalInfo(); return; }
     if (title === 'Stealth mode') { this.actionNotice.set('Stealth mode activated. UI elements hidden.'); return; }
+    if (title === 'Nearby police') { this.findNearbyPolice(); return; }
+    if (title === 'Emergency routes') { this.findEmergencyRoutes(); return; }
+    if (title === 'Safe zones') { this.openSafeZoneDialog(); return; }
+    if (title === 'Guardian Angel') { this.showGuardianAngelDialog.set(true); return; }
     this.activeTool.set(title);
   }
 
@@ -1348,6 +1443,130 @@ export class App implements OnInit {
     if (tool === 'Private security dispatch') {
       this.requestEscort();
     }
+  }
+
+  // Safe Zone Methods
+  openSafeZoneDialog(): void {
+    this.showSafeZoneDialog.set(true);
+  }
+
+  closeSafeZoneDialog(): void {
+    this.showSafeZoneDialog.set(false);
+    this.safeZoneName = '';
+    this.safeZoneRadius = 200;
+  }
+
+  addSafeZone(): void {
+    if (!this.safeZoneName.trim()) {
+      this.error.set('Please enter a name for the safe zone.');
+      return;
+    }
+
+    const location = this.currentLocation();
+    if (!location) {
+      this.error.set('Location not available. Please enable location services.');
+      return;
+    }
+
+    const newSafeZone = {
+      id: generateUUID(),
+      name: this.safeZoneName,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      radius: this.safeZoneRadius,
+      addedBy: this.auth.user()?.id || '',
+      timestamp: new Date().toISOString()
+    };
+
+    this.auth.post<{ safeZones: any[] }>('/squad/safe-zones', newSafeZone).subscribe({
+      next: (response) => {
+        this.safeZones.set(response.safeZones || []);
+        this.showSafeZoneDialog.set(false);
+        this.safeZoneName = '';
+        this.safeZoneRadius = 200;
+        this.actionNotice.set('Safe zone added successfully!');
+        this.checkSafeZones();
+      },
+      error: (response) => this.error.set(response.error?.message || 'Could not add safe zone.')
+    });
+  }
+
+  deleteSafeZone(zoneId: string): void {
+    this.auth.delete<{ safeZones: any[] }>(`/squad/safe-zones/${zoneId}`).subscribe({
+      next: (response) => {
+        this.safeZones.set(response.safeZones || []);
+        this.actionNotice.set('Safe zone removed.');
+        this.checkSafeZones();
+      },
+      error: (response) => this.error.set(response.error?.message || 'Could not remove safe zone.')
+    });
+  }
+
+  // Coverage Test Method
+  testCoverage(): void {
+    const location = this.currentLocation();
+    if (!location) {
+      this.error.set('Location not available. Please enable location services.');
+      return;
+    }
+
+    const results = {
+      location: '✓ Available',
+      locationAccuracy: location.accuracy ? `±${location.accuracy.toFixed(0)}m` : 'Unknown',
+      safeZones: this.safeZones().length > 0 ? `✓ ${this.safeZones().length} zones configured` : '⚠ No zones configured',
+      inSafeZone: this.inSafeZone() ? `✓ In ${this.currentSafeZone()?.name}` : '○ Outside all zones',
+      guardianAngel: this.guardianAngelActive() ? `✓ Monitoring ${this.getMemberName(this.guardianAngelMember()!)}` : '○ Inactive',
+      squadMembers: `✓ ${this.squad()?.members.length || 0} members`,
+      notifications: 'Notification' in window ? (Notification.permission === 'granted' ? '✓ Enabled' : '⚠ Not granted') : '✗ Not supported',
+      battery: `✓ ${this.batteryLevel()}%`,
+      online: this.isOffline() ? '✗ Offline' : '✓ Online'
+    };
+
+    const message = `
+Coverage Test Results:
+━━━━━━━━━━━━━━━━━━━━━━━━
+📍 Location: ${results.location}
+🎯 Accuracy: ${results.locationAccuracy}
+🛡️ Safe Zones: ${results.safeZones}
+📍 Current Zone: ${results.inSafeZone}
+👼 Guardian Angel: ${results.guardianAngel}
+👥 Squad Members: ${results.squadMembers}
+🔔 Notifications: ${results.notifications}
+🔋 Battery: ${results.battery}
+🌐 Network: ${results.online}
+━━━━━━━━━━━━━━━━━━━━━━━━
+`.trim();
+
+    alert(message);
+  }
+
+  // Nearby Police Feature
+  findNearbyPolice(): void {
+    const location = this.currentLocation();
+    if (!location) {
+      this.error.set('Location not available. Please enable location services.');
+      return;
+    }
+
+    // Open Google Maps search for nearby police stations
+    const mapsUrl = `https://www.google.com/maps/search/police+station/@${location.latitude},${location.longitude},14z`;
+    window.open(mapsUrl, '_blank');
+    this.actionNotice.set('Opening nearby police stations on Google Maps...');
+  }
+
+  // Emergency Routes Feature
+  findEmergencyRoutes(): void {
+    const location = this.currentLocation();
+    if (!location) {
+      this.error.set('Location not available. Please enable location services.');
+      return;
+    }
+
+    // Open Google Maps with safe route to home (or nearest hospital)
+    const destination = this.trip()?.destination || 'hospital';
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${location.latitude},${location.longitude}&destination=${encodeURIComponent(destination)}&travelmode=walking`;
+    window.open(mapsUrl, '_blank');
+    this.actionNotice.set('Opening emergency route directions...');
   }
 
   private decorateSquad(squad: SquadData | null): SquadData | null {

@@ -1473,6 +1473,178 @@ label {
   font-weight: 600;
   color: var(--neutral-700);
   box-shadow: var(--shadow-sm);
+  animation: coverage-point-appear 0.5s ease forwards;
+  opacity: 0;
+}
+
+.coverage-points span:nth-child(1) { animation-delay: 0.1s; }
+.coverage-points span:nth-child(2) { animation-delay: 0.2s; }
+.coverage-points span:nth-child(3) { animation-delay: 0.3s; }
+.coverage-points span:nth-child(4) { animation-delay: 0.4s; }
+.coverage-points span:nth-child(5) { animation-delay: 0.5s; }
+.coverage-points span:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes coverage-point-appear {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.coverage-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+  margin: var(--space-lg) 0;
+}
+
+.coverage-feature-card {
+  background: linear-gradient(135deg, var(--primary-50) 0%, white 100%);
+  border: 1px solid var(--primary-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  text-align: center;
+  transition: all var(--transition-base);
+  animation: feature-card-appear 0.5s ease forwards;
+  opacity: 0;
+}
+
+.coverage-feature-card:nth-child(1) { animation-delay: 0.1s; }
+.coverage-feature-card:nth-child(2) { animation-delay: 0.2s; }
+.coverage-feature-card:nth-child(3) { animation-delay: 0.3s; }
+.coverage-feature-card:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes feature-card-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.coverage-feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-300);
+}
+
+.feature-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: var(--space-sm);
+  animation: feature-icon-bounce 2s ease-in-out infinite;
+}
+
+@keyframes feature-icon-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.coverage-feature-card h3 {
+  margin: var(--space-sm) 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+}
+
+.coverage-feature-card p {
+  margin: var(--space-sm) 0 var(--space-md);
+  font-size: 0.875rem;
+  color: var(--neutral-600);
+}
+
+.feature-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.feature-status.active {
+  background: var(--success-100);
+  color: var(--success-700);
+  border: 1px solid var(--success-200);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.feature-status.inactive {
+  background: var(--danger-100);
+  color: var(--danger-700);
+  border: 1px solid var(--danger-200);
+}
+
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.coverage-actions {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-top: var(--space-lg);
+}
+
+.coverage-actions .secondary-btn {
+  background: var(--primary-500);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  animation: coverage-action-appear 0.5s ease forwards;
+  opacity: 0;
+}
+
+.coverage-actions .secondary-btn:nth-child(1) { animation-delay: 0.1s; }
+.coverage-actions .secondary-btn:nth-child(2) { animation-delay: 0.2s; }
+.coverage-actions .secondary-btn:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes coverage-action-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.coverage-actions .secondary-btn:hover {
+  background: var(--primary-600);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.form-hint {
+  font-size: 0.875rem;
+  color: var(--neutral-600);
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--neutral-50);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--primary-500);
 }
 
 .coverage-points strong {
