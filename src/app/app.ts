@@ -286,6 +286,11 @@ export class App implements OnInit {
 
   get displayName(): string { return this.user()?.name?.split(' ')[0] || 'there'; }
 
+  get profileComplete(): boolean {
+    const profile = this.user();
+    return !!profile?.name?.trim() && !!profile.phone?.trim() && !!profile.emergencyContactName?.trim() && !!profile.emergencyContactPhone?.trim();
+  }
+
   formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -1281,6 +1286,10 @@ export class App implements OnInit {
   }
 
   saveProfile(): void {
+    if (this.profileName.trim().length < 2 || !this.profilePhone.trim() || !this.emergencyContactName.trim() || !this.emergencyContactPhone.trim()) {
+      this.error.set('Add your name, phone number, and emergency contact details to complete your profile.');
+      return;
+    }
     this.auth.patch<{ user: UserProfile }>('/auth/profile', { name: this.profileName, phone: this.profilePhone, emergencyContactName: this.emergencyContactName, emergencyContactPhone: this.emergencyContactPhone }).subscribe({
       next: (response) => { this.user.set(response.user); this.showProfileDialog.set(false); this.actionNotice.set('Your profile details were updated.'); },
       error: (response) => this.error.set(response.error?.message || 'Could not update your profile.'),
@@ -1445,7 +1454,6 @@ export class App implements OnInit {
     }
   }
 
-  // Safe Zone Methods
   openSafeZoneDialog(): void {
     this.showSafeZoneDialog.set(true);
   }
@@ -1456,53 +1464,6 @@ export class App implements OnInit {
     this.safeZoneRadius = 200;
   }
 
-  addSafeZone(): void {
-    if (!this.safeZoneName.trim()) {
-      this.error.set('Please enter a name for the safe zone.');
-      return;
-    }
-
-    const location = this.currentLocation();
-    if (!location) {
-      this.error.set('Location not available. Please enable location services.');
-      return;
-    }
-
-    const newSafeZone = {
-      id: generateUUID(),
-      name: this.safeZoneName,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      radius: this.safeZoneRadius,
-      addedBy: this.auth.user()?.id || '',
-      timestamp: new Date().toISOString()
-    };
-
-    this.auth.post<{ safeZones: any[] }>('/squad/safe-zones', newSafeZone).subscribe({
-      next: (response) => {
-        this.safeZones.set(response.safeZones || []);
-        this.showSafeZoneDialog.set(false);
-        this.safeZoneName = '';
-        this.safeZoneRadius = 200;
-        this.actionNotice.set('Safe zone added successfully!');
-        this.checkSafeZones();
-      },
-      error: (response) => this.error.set(response.error?.message || 'Could not add safe zone.')
-    });
-  }
-
-  deleteSafeZone(zoneId: string): void {
-    this.auth.delete<{ safeZones: any[] }>(`/squad/safe-zones/${zoneId}`).subscribe({
-      next: (response) => {
-        this.safeZones.set(response.safeZones || []);
-        this.actionNotice.set('Safe zone removed.');
-        this.checkSafeZones();
-      },
-      error: (response) => this.error.set(response.error?.message || 'Could not remove safe zone.')
-    });
-  }
-
-  // Coverage Test Method
   testCoverage(): void {
     const location = this.currentLocation();
     if (!location) {
@@ -1538,35 +1499,6 @@ Coverage Test Results:
 `.trim();
 
     alert(message);
-  }
-
-  // Nearby Police Feature
-  findNearbyPolice(): void {
-    const location = this.currentLocation();
-    if (!location) {
-      this.error.set('Location not available. Please enable location services.');
-      return;
-    }
-
-    // Open Google Maps search for nearby police stations
-    const mapsUrl = `https://www.google.com/maps/search/police+station/@${location.latitude},${location.longitude},14z`;
-    window.open(mapsUrl, '_blank');
-    this.actionNotice.set('Opening nearby police stations on Google Maps...');
-  }
-
-  // Emergency Routes Feature
-  findEmergencyRoutes(): void {
-    const location = this.currentLocation();
-    if (!location) {
-      this.error.set('Location not available. Please enable location services.');
-      return;
-    }
-
-    // Open Google Maps with safe route to home (or nearest hospital)
-    const destination = this.trip()?.destination || 'hospital';
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${location.latitude},${location.longitude}&destination=${encodeURIComponent(destination)}&travelmode=walking`;
-    window.open(mapsUrl, '_blank');
-    this.actionNotice.set('Opening emergency route directions...');
   }
 
   private decorateSquad(squad: SquadData | null): SquadData | null {

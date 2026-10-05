@@ -12,8 +12,31 @@
     @if (actionNotice()) {<div class="toast" role="status"><span>✓</span>{{ actionNotice() }}<button type="button" (click)="actionNotice.set('')" aria-label="Dismiss">×</button></div>}
     @if (trustedAlert()) {<div class="escort-notification" role="alert"><span class="alert-icon">!</span><div><strong>Escort requested</strong><p>{{ trustedAlert()?.message }}</p></div><button type="button" (click)="markAlertRead(trustedAlert()!.id)">Acknowledge</button></div>}
 
+    <section class="analytics-strip" aria-label="Safety operations overview">
+      <article class="metric-card">
+        <span class="metric-label">Safety score</span>
+        <strong>{{ safetyScore() }}</strong>
+        <small>Healthy and improving</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Checked in</span>
+        <strong>{{ squad()?.members?.filter(member => member.checked_in).length || 0 }}</strong>
+        <small>{{ squad() ? 'members active' : 'Awaiting squad' }}</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Safe zones</span>
+        <strong>{{ safeZones().length }}</strong>
+        <small>Protected areas</small>
+      </article>
+      <article class="metric-card metric-card-accent">
+        <span class="metric-label">Emergency status</span>
+        <strong>{{ inDanger() ? 'Live' : 'Standby' }}</strong>
+        <small>{{ inDanger() ? 'Protocol active' : 'Ready for response' }}</small>
+      </article>
+    </section>
+
     @if (loading()) {<div class="loading-state"><span class="status-dot"></span> Loading your secure squad data...</div>}
-    @else if (!squad()) {<section class="empty-state panel-card"><span class="section-kicker">Start here</span><h2>Create your first safety circle</h2><p>Add a squad for tonight and invite people you trust. Your personal account is ready.</p><button class="primary-btn" type="button" (click)="openSquadDialog()">Create first squad <span>→</span></button></section><section class="dashboard-grid"><article id="live-location" class="map-card panel-card"><div class="card-heading"><div><span class="card-eyebrow">Live coverage</span><h2>Map Preview</h2></div><span class="live-badge"><i></i> Venue preview</span></div><div class="map-visual real-map"><iframe title="Your live squad map" [src]="mapUrl"></iframe><div class="map-overlay"><span class="map-user-dot"></span>Create a squad to enable live location sharing</div></div><div class="map-footer"><span><i class="legend-dot green"></i> Map preview mode</span><button type="button" (click)="openSquadDialog()">Create squad →</button></div></article></section>}
+    @else if (!squad()) {<section class="empty-state panel-card"><div class="empty-state-copy"><span class="section-kicker">Start here</span><h2>Create your first safety circle</h2><p>Add a squad for tonight and invite people you trust. Your personal account is ready.</p></div><div class="onboarding-checklist" aria-label="Onboarding checklist"><div class="checklist-item" [class.complete]="profileComplete"><span>{{ profileComplete ? '✓' : '1' }}</span><div><strong>{{ profileComplete ? 'Profile complete' : 'Complete your profile' }}</strong><small>{{ profileComplete ? 'Contact details are ready for your squad' : 'Add your phone and emergency contact details' }}</small></div></div><div class="checklist-item"><span>2</span><div><strong>Create your squad</strong><small>Start a circle and invite people you trust</small></div></div><div class="checklist-item"><span>3</span><div><strong>Set check-in flow</strong><small>Activate timer and location safety</small></div></div></div><div class="empty-cta-row"><button class="primary-btn" type="button" (click)="openSquadDialog()">Create first squad <span>→</span></button><button class="secondary-btn" type="button" (click)="openProfileDialog()">{{ profileComplete ? 'Edit profile' : 'Complete profile' }}</button></div></section><section class="dashboard-grid"><article id="live-location" class="map-card panel-card"><div class="card-heading"><div><span class="card-eyebrow">Live coverage</span><h2>Map Preview</h2></div><span class="live-badge"><i></i> Venue preview</span></div><div class="map-visual real-map"><iframe title="Your live squad map" [src]="mapUrl"></iframe><div class="map-overlay"><span class="map-user-dot"></span>Create a squad to enable live location sharing</div></div><div class="map-footer"><span><i class="legend-dot green"></i> Map preview mode</span><button type="button" (click)="openSquadDialog()">Create squad →</button></div></article></section>}
     @else {
       <section class="dashboard-grid">
         <article class="safety-score-card panel-card"><div class="score-header"><div><span class="card-eyebrow">Your safety score</span><h2>{{ safetyScore() }}/100</h2></div><div class="score-trend"><span>🔥</span>{{ safetyStreak() }} day streak</div></div><div class="score-progress"><div class="score-bar" [style.width.%]="safetyScore()"></div></div><div class="achievements-list">@for (achievement of achievements(); track achievement) {<span class="achievement-badge">{{ achievement }}</span>}</div><div class="score-actions"><button class="secondary-btn" type="button" (click)="showRandomTip()">💡 Safety tip</button><button class="secondary-btn" type="button" (click)="showLocationHistoryTimeline()">📍 Location history</button></div></article>
@@ -40,7 +63,27 @@
 
     <section id="tools" class="tools-section"><div class="section-heading"><div><span class="section-kicker">Your safety toolkit</span><h2>Everything you need, right when you need it.</h2></div><span class="section-note">Five controls. One calm night.</span></div><div class="tool-grid">@for (feature of features; track feature.title) {<article class="tool-card"><span class="tool-icon">{{ feature.icon }}</span><h3>{{ feature.title }}</h3><p>{{ feature.description }}</p><button type="button" (click)="triggerAction(feature.title)">Open tool <span>→</span></button></article>}</div></section>
     @if (trip()) {<section class="trip-card panel-card"><div><span class="card-eyebrow">Active trip plan</span><h2>{{ trip()?.title }}</h2><p>{{ trip()?.destination }} · ETA {{ trip()?.eta || 'Not set' }}</p><small>{{ trip()?.notes || 'Your squad can see this destination.' }}</small></div><div class="trip-actions"><a class="secondary-btn" [href]="'https://www.google.com/maps/search/?api=1&query=' + trip()?.destination" target="_blank" rel="noopener">Open destination</a><button class="text-button" type="button" (click)="openTripDialog()">Edit plan</button></div></section>}
-    <section id="coverage" class="coverage-info"><div><span class="section-kicker animated-fade-in">Coverage</span><h2 class="animated-slide-in">Your private safety perimeter.</h2><p class="animated-fade-in">Safe Squad combines venue boundaries, member check-ins, location sharing, and discreet escalation in one quiet control center.</p></div><div class="coverage-points stagger-container"><span class="animated-slide-in"><strong>01</strong>Venue boundary awareness</span><span class="animated-slide-in"><strong>02</strong>Encrypted location sharing</span><span class="animated-slide-in"><strong>03</strong>Trusted-contact notifications</span><span class="animated-slide-in"><strong>04</strong>Emergency response integration</span><span class="animated-slide-in"><strong>05</strong>Real-time monitoring</span><span class="animated-slide-in"><strong>06</strong>Safe zone detection</span></div><div class="coverage-features"><div class="coverage-feature-card animated-bounce"><span class="feature-icon">📍</span><h3>Location Tracking</h3><p>Real-time GPS tracking with 10m accuracy</p><div class="feature-status active">Active</div></div><div class="coverage-feature-card animated-bounce"><span class="feature-icon">🛡️</span><h3>Safe Zones</h3><p>{{ safeZones().length }} safe zones configured</p><div class="feature-status {{ inSafeZone() ? 'active' : 'inactive' }}">{{ inSafeZone() ? 'In Zone' : 'Outside' }}</div></div><div class="coverage-feature-card animated-bounce"><span class="feature-icon">👼</span><h3>Guardian Angel</h3><p>Monitoring squad members</p><div class="feature-status {{ guardianAngelActive() ? 'active' : 'inactive' }}">{{ guardianAngelActive() ? 'Active' : 'Inactive' }}</div></div><div class="coverage-feature-card animated-bounce"><span class="feature-icon">🔔</span><h3>Alert System</h3><p>Emergency notifications enabled</p><div class="feature-status active">Enabled</div></div></div><div class="coverage-actions"><button class="secondary-btn animated-slide-in" type="button" (click)="showSafeZoneDialog.set(true)">Add Safe Zone</button><button class="secondary-btn animated-slide-in" type="button" (click)="showGuardianAngelDialog.set(true)">Set Guardian</button><button class="secondary-btn animated-slide-in" type="button" (click)="testCoverage()">Test Coverage</button></div></section>
+    <section id="coverage" class="coverage-info">
+      <div class="coverage-header">
+        <div class="coverage-copy">
+          <span class="section-kicker animated-fade-in">Coverage</span>
+          <h2 class="animated-slide-in">Your private safety perimeter.</h2>
+          <p class="animated-fade-in">Location sharing, safe zones, and trusted-contact alerts in one place.</p>
+        </div>
+        <div class="coverage-actions">
+          <button class="secondary-btn" type="button" (click)="showSafeZoneDialog.set(true)">Add Safe Zone</button>
+          <button class="secondary-btn" type="button" (click)="showGuardianAngelDialog.set(true)">Set Guardian</button>
+          <button class="primary-btn" type="button" (click)="testCoverage()">Test Coverage</button>
+        </div>
+      </div>
+
+      <div class="coverage-features">
+        <div class="coverage-feature-card"><span class="feature-icon">📍</span><div><h3>Location Tracking</h3><p>Live location</p></div><div class="feature-status active">Active</div></div>
+        <div class="coverage-feature-card"><span class="feature-icon">🛡️</span><div><h3>Safe Zones</h3><p>{{ safeZones().length }} configured</p></div><div class="feature-status {{ inSafeZone() ? 'active' : 'inactive' }}">{{ inSafeZone() ? 'In Zone' : 'Outside' }}</div></div>
+        <div class="coverage-feature-card"><span class="feature-icon">👼</span><div><h3>Guardian Angel</h3><p>Squad monitoring</p></div><div class="feature-status {{ guardianAngelActive() ? 'active' : 'inactive' }}">{{ guardianAngelActive() ? 'Active' : 'Inactive' }}</div></div>
+        <div class="coverage-feature-card"><span class="feature-icon">🔔</span><div><h3>Alert System</h3><p>Emergency alerts</p></div><div class="feature-status active">Enabled</div></div>
+      </div>
+    </section>
   </main>
   <footer class="product-footer"><span>Safe Squad <small>Private safety, shared together.</small></span><button type="button" (click)="logout()">Sign out</button></footer>
 </div>
@@ -49,7 +92,25 @@
 
 @if (showTripDialog()) {<div class="modal-backdrop" (click)="closeTripDialog()"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="trip-dialog-title" (click)="$event.stopPropagation()"><button class="dialog-close" type="button" (click)="closeTripDialog()" aria-label="Close">×</button><span class="section-kicker">Trip plan</span><h2 id="trip-dialog-title">{{ trip() ? 'Edit your plan' : 'Where are you going?' }}</h2><p>Your squad can use this destination to look out for you.</p><label for="trip-title">Plan name</label><input id="trip-title" name="tripTitle" [(ngModel)]="tripTitle" placeholder="e.g. Heading home" /><label for="destination">Destination</label><input id="destination" name="destination" [(ngModel)]="destination" placeholder="e.g. 12 Main Street" /><div class="form-grid"><div><label for="departure">Departure</label><input id="departure" name="departure" type="datetime-local" [(ngModel)]="departureTime" /></div><div><label for="eta">ETA</label><input id="eta" name="eta" [(ngModel)]="eta" placeholder="e.g. 23:40" /></div></div><label for="trip-notes">Notes</label><input id="trip-notes" name="tripNotes" [(ngModel)]="tripNotes" placeholder="Optional details" /><button class="primary-btn dialog-submit" type="button" [disabled]="!tripTitle.trim() || !destination.trim()" (click)="saveTrip()">Save trip plan <span>→</span></button>@if (trip()) {<button class="danger-link" type="button" (click)="endTrip()">End trip and clear check-in</button>}</section></div>}
 
-@if (showProfileDialog()) {<div class="modal-backdrop" (click)="showProfileDialog.set(false)"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="profile-dialog-title" (click)="$event.stopPropagation()"><button class="dialog-close" type="button" (click)="showProfileDialog.set(false)" aria-label="Close">×</button><span class="section-kicker">Account details</span><h2 id="profile-dialog-title">Edit your profile</h2><label for="profile-name">Full name</label><input id="profile-name" name="profileName" [(ngModel)]="profileName" /><label for="profile-phone">Phone</label><input id="profile-phone" name="profilePhone" [(ngModel)]="profilePhone" /><label for="profile-emergency-name">Emergency contact</label><input id="profile-emergency-name" name="profileEmergencyName" [(ngModel)]="emergencyContactName" /><label for="profile-emergency-phone">Emergency contact phone</label><input id="profile-emergency-phone" name="profileEmergencyPhone" [(ngModel)]="emergencyContactPhone" /><button class="primary-btn dialog-submit" type="button" (click)="saveProfile()">Save profile <span>→</span></button></section></div>}
+@if (showProfileDialog()) {
+  <div class="modal-backdrop" (click)="showProfileDialog.set(false)">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="profile-dialog-title" (click)="$event.stopPropagation()">
+      <button class="dialog-close" type="button" (click)="showProfileDialog.set(false)" aria-label="Close">×</button>
+      <span class="section-kicker">Account details</span>
+      <h2 id="profile-dialog-title">{{ profileComplete ? 'Edit your profile' : 'Complete your profile' }}</h2>
+      @if (!profileComplete) {<p>Add your phone number and an emergency contact so your squad knows who to reach.</p>}
+      <label for="profile-name">Full name</label>
+      <input id="profile-name" name="profileName" [(ngModel)]="profileName" autocomplete="name" required />
+      <label for="profile-phone">Phone</label>
+      <input id="profile-phone" name="profilePhone" [(ngModel)]="profilePhone" autocomplete="tel" required />
+      <label for="profile-emergency-name">Emergency contact</label>
+      <input id="profile-emergency-name" name="profileEmergencyName" [(ngModel)]="emergencyContactName" required />
+      <label for="profile-emergency-phone">Emergency contact phone</label>
+      <input id="profile-emergency-phone" name="profileEmergencyPhone" [(ngModel)]="emergencyContactPhone" autocomplete="tel" required />
+      <button class="primary-btn dialog-submit" type="button" [disabled]="profileName.trim().length < 2 || !profilePhone.trim() || !emergencyContactName.trim() || !emergencyContactPhone.trim()" (click)="saveProfile()">{{ profileComplete ? 'Save profile' : 'Complete profile' }} <span>→</span></button>
+    </section>
+  </div>
+}
 
 @if (showDangerModal()) {<div class="modal-backdrop emergency-backdrop" (click)="closeDangerModal()"><section class="emergency-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()"><div class="emergency-header"><span class="emergency-icon">🚨</span><span class="section-kicker emergency-kicker">EMERGENCY PROTOCOL</span><h2>SOS Mode Active</h2></div><div class="emergency-info"><div class="emergency-detail"><span class="detail-label">Your Location</span><strong>{{ currentLocation()?.latitude?.toFixed(4) }}, {{ currentLocation()?.longitude?.toFixed(4) }}</strong></div><div class="emergency-detail"><span class="detail-label">Battery Level</span><strong>{{ batteryLevel() }}%</strong></div><div class="emergency-detail"><span class="detail-label">Squad Notified</span><strong>Yes - Live coordinates sent</strong></div></div><div class="emergency-actions"><button class="emergency-call-btn emergency-services" type="button" (click)="callEmergencyServices()">📞 Call 911</button><button class="emergency-call-btn emergency-contact" type="button" (click)="callEmergencyContact()">📞 Call Emergency Contact</button></div><div class="emergency-sound-indicator"><span class="sound-pulse">🔊</span><strong>Sound Alarm Active</strong></div><button class="emergency-resolve-btn" type="button" (click)="resolveDangerMode()">✓ I am Safe Now</button></section></div>}
 
@@ -61,7 +122,64 @@
 
 @if (fakeCallIncoming()) {<div class="fake-call-overlay"><div class="fake-call-screen"><div class="call-header"><span class="call-time">{{ formatTime(fakeCallTimer()) }}</span><span class="call-status">Incoming call</span></div><div class="call-avatar"><span class="avatar large">{{ fakeCallCallerName().charAt(0) }}</span></div><div class="call-info"><h2>{{ fakeCallCallerName() }}</h2><p>Mobile</p></div><div class="call-actions"><button class="call-btn decline" type="button" (click)="endFakeCall()">Decline</button><button class="call-btn accept" type="button" (click)="endFakeCall()">Accept</button></div></div></div>}
 
-@if (showMessaging()) {<div class="messaging-overlay"><div class="messaging-panel"><div class="messaging-header"><h2>Squad Messages</h2><div class="messaging-actions"><button class="search-btn" type="button" (click)="toggleSearch()">🔍</button><button class="close-btn" type="button" (click)="closeMessaging()">×</button></div></div>@if (showSearch()) {<div class="search-bar"><input type="text" [(ngModel)]="searchQuery" placeholder="Search messages..." (input)="searchMessages()" /></div>}<div class="messaging-body"><div class="members-list">@for (member of squad()?.members; track member.id) {<button class="member-item" [class.active]="selectedMember() === member.id" type="button" (click)="selectMember(member.id)"><span class="avatar small" [class]="member.color">{{ member.name.charAt(0) }}</span><span>{{ member.name }}</span>@if (isTyping() && selectedMember() === member.id) {<span class="typing-indicator">typing...</span>}</button>}</div><div class="messages-area">@if (selectedMember()) {<div class="messages-container">@for (message of (showSearch() && searchQuery() ? filteredMessages() : messages()); track message.id) {<div class="message" [class.from-me]="message.sender_id === user()?.id" (click)="markAsRead(message.id)"><div class="message-content">{{ message.content }}</div><small class="message-time">{{ formatMessageTime(message.timestamp) }}</small></div>}</div><div class="message-input-area"><input type="text" [(ngModel)]="newMessage" placeholder="Type a message..." (keypress)="onKeyPress($event)" /><button class="send-btn" type="button" (click)="sendMessage()">Send</button></div>} @else {<div class="no-chat-selected">Select a member to start messaging</div>}</div></div></div></div>}
+@if (showMessaging()) {
+  <div class="messaging-overlay">
+    <section class="messaging-panel" role="dialog" aria-modal="true" aria-labelledby="messages-title">
+      <header class="messaging-header">
+        <div class="messaging-title">
+          <span class="messaging-kicker">Private circle</span>
+          <h2 id="messages-title">Squad messages</h2>
+          <p>Stay in sync with your people.</p>
+        </div>
+        <div class="messaging-actions">
+          <button class="search-btn" type="button" aria-label="Search messages" [attr.aria-expanded]="showSearch()" (click)="toggleSearch()">🔍</button>
+          <button class="close-btn" type="button" aria-label="Close messages" (click)="closeMessaging()">×</button>
+        </div>
+      </header>
+      @if (showSearch()) {
+        <div class="search-bar"><input type="text" aria-label="Search messages" [(ngModel)]="searchQuery" placeholder="Search messages..." (input)="searchMessages()" /></div>
+      }
+      <div class="messaging-body">
+        <nav class="members-list" aria-label="Squad members">
+          @for (member of squad()?.members; track member.id) {
+            <button class="member-item" [class.active]="selectedMember() === member.id" [attr.aria-pressed]="selectedMember() === member.id" type="button" (click)="selectMember(member.id)">
+              <span class="avatar small" [class]="member.color">{{ member.name.charAt(0) }}</span>
+              <span class="member-name">{{ member.name }}</span>
+              @if (isTyping() && selectedMember() === member.id) {<span class="typing-indicator">typing...</span>}
+            </button>
+          }
+        </nav>
+        <div class="messages-area">
+          @if (selectedMember()) {
+            <div class="conversation-topline">
+              @for (member of squad()?.members; track member.id) {
+                @if (selectedMember() === member.id) {
+                  <span class="avatar small" [class]="member.color">{{ member.name.charAt(0) }}</span>
+                  <span class="conversation-person"><strong>{{ member.name }}</strong><small>Private conversation</small></span>
+                }
+              }
+              <span class="conversation-status"><i></i> Squad chat</span>
+            </div>
+            <div class="messages-container" aria-live="polite">
+              @for (message of (showSearch() && searchQuery() ? filteredMessages() : messages()); track message.id) {
+                <div class="message" [class.from-me]="message.sender_id === user()?.id" (click)="markAsRead(message.id)">
+                  <div class="message-content">{{ message.content }}</div>
+                  <small class="message-time">{{ formatMessageTime(message.timestamp) }}</small>
+                </div>
+              }
+            </div>
+            <div class="message-input-area">
+              <input type="text" aria-label="Write a message" [(ngModel)]="newMessage" placeholder="Write a message..." (keypress)="onKeyPress($event)" />
+              <button class="send-btn" type="button" (click)="sendMessage()"><span>Send</span><span aria-hidden="true">→</span></button>
+            </div>
+          } @else {
+            <div class="no-chat-selected"><span class="empty-chat-mark">✦</span><strong>Your conversation starts here</strong><span>Select a squad member to open a private chat.</span></div>
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+}
 
 @if (showSafetyTips()) {<div class="safety-tip-overlay"><div class="safety-tip-card"><div class="tip-header"><span class="tip-icon">💡</span><h2>Safety Tip</h2><button class="close-btn" type="button" (click)="dismissTip()">×</button></div><p class="tip-content">{{ currentTip() }}</p><button class="primary-btn" type="button" (click)="dismissTip()">Got it, thanks!</button></div></div>}
 

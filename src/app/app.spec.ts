@@ -5,20 +5,20 @@ describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-    })
-      .compileComponents();
+    }).compileComponents();
   });
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
+    expect(app.title).toBe('Safe Squad');
   });
 
-  it('should render title', async () => {
+  it('should render the brand name', async () => {
     const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
+    fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, safe-squad');
+    expect(compiled.querySelector('.brand-name')?.textContent).toContain('Safe Squad');
   });
 });

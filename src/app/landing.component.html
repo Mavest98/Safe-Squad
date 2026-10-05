@@ -1,13 +1,4 @@
 <div class="landing-container">
-  <div class="landing-background">
-    <div class="background-shapes">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
-      <div class="shape shape-4"></div>
-      <div class="shape shape-5"></div>
-    </div>
-  </div>
   <div class="landing-content">
     <div class="landing-header">
       <div class="brand">
@@ -17,44 +8,57 @@
           <span class="brand-tagline">Nightlife safety network</span>
         </div>
       </div>
+      <nav class="top-nav" aria-label="Primary navigation">
+        <a href="#features">Features</a>
+        <a href="#why-safe-squad">Security</a>
+        <a href="#features">Coverage</a>
+      </nav>
+      <button class="header-cta" type="button" (click)="navigateToLogin()">Open app</button>
     </div>
 
     <div class="landing-hero">
-      <div class="hero-visual">
-        <div class="hero-shield">
-          <div class="shield-ring"></div>
-          <div class="shield-ring shield-ring-2"></div>
-          <div class="shield-core">
-            <span class="shield-icon">🛡️</span>
-          </div>
-          <div class="shield-particles">
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-          </div>
+      <div class="hero-visual" aria-label="Safe Squad product preview">
+        <div class="product-preview">
+          <div class="preview-topline"><span class="preview-brand"><span class="preview-mark">S</span> Safe Squad</span><span class="preview-label">PRODUCT PREVIEW</span></div>
+          <div class="preview-heading"><div><span class="preview-kicker">SAFETY OVERVIEW</span><h3>Your circle, in sync.</h3></div><span class="preview-status"><i></i> Protected</span></div>
+          <div class="preview-map" aria-hidden="true"><span class="map-route"></span><span class="map-point map-point-one"><i></i></span><span class="map-point map-point-two"><i></i></span><span class="map-caption">SHARED WITH YOUR SQUAD</span></div>
+          <div class="preview-members"><span class="member-stack"><i>J</i><i>M</i><i>A</i></span><span><strong>Trusted people, together</strong><small>Check-ins and location in one place</small></span><span class="preview-arrow">↗</span></div>
         </div>
       </div>
       <div class="hero-text">
+        <span class="eyebrow">Realtime protection for every night out</span>
         <h2 class="hero-title">Your Safety Circle,<br>Always Connected</h2>
         <p class="hero-subtitle">Stay safe with real-time location sharing, emergency alerts, and trusted squad coordination for any night out.</p>
-        
+
+        <div class="hero-metrics" aria-label="Included safety tools">
+          <div class="metric-pill">
+            <strong>One tap</strong>
+            <span>Emergency SOS</span>
+          </div>
+          <div class="metric-pill">
+            <strong>Your circle</strong>
+            <span>Trusted contacts</span>
+          </div>
+          <div class="metric-pill">
+            <strong>Safe zones</strong>
+            <span>Places that matter</span>
+          </div>
+        </div>
+
         <div class="hero-actions">
-          <button class="primary-btn large" type="button" (click)="navigateToLogin()">
-            <span class="btn-text">Get Started Free</span>
+          <button class="primary-btn large" type="button" (click)="navigateToRegister()">
+            <span class="btn-text">Create your safety circle</span>
             <span class="btn-icon">→</span>
           </button>
-          <button class="secondary-btn large" type="button" (click)="navigateToRegister()">
-            <span class="btn-text">Learn More</span>
-            <span class="btn-icon">⚡</span>
+          <button class="secondary-btn large" type="button" (click)="navigateToLogin()">
+            <span class="btn-text">Sign in</span>
+            <span class="btn-icon">↗</span>
           </button>
         </div>
       </div>
     </div>
 
-    <div class="features-grid">
+    <div id="features" class="features-grid">
       <div class="feature-card">
         <div class="feature-icon-wrapper">
           <span class="feature-icon">🚨</span>
@@ -99,7 +103,7 @@
       </div>
     </div>
 
-    <div class="trust-section">
+    <div id="why-safe-squad" class="trust-section">
       <h3>Why Safe Squad?</h3>
       <div class="trust-points">
         <div class="trust-point">
